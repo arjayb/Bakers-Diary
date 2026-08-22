@@ -5,6 +5,7 @@ import App from './App.jsx';
 import './theme/tokens.css';
 import './app.css';
 import './login-reference.css';
+import './login-visibility.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
