@@ -98,19 +98,62 @@ const updateRecipe = asyncHandler(async (req, res) => {
     if (ingredients) {
       await tx.recipeIngredient.deleteMany({ where: { recipeId: existing.id } });
     }
+    let preserveHistoricalSteps = false;
+
     if (steps) {
-      // A step can be referenced by SessionStep rows from past bakes —
-      // deleting and recreating steps on edit would orphan that history.
-      // For v0.1, editing steps on a recipe that already has sessions is
-      // blocked rather than silently breaking session history.
-      const sessionCount = await tx.cookingSession.count({ where: { recipeId: existing.id } });
+      const sessionCount = await tx.cookingSession.count({
+        where: { recipeId: existing.id }
+      });
+
       if (sessionCount > 0) {
-        throw Object.assign(
-          new Error('This recipe has bake history attached to its steps, so steps can\'t be restructured here in v0.1. Start a new recipe version instead, or edit step text only (steps array omitted).'),
-          { status: 409 }
-        );
+        const existingSteps = await tx.recipeStep.findMany({
+          where: { recipeId: existing.id },
+          orderBy: { order: 'asc' }
+        });
+
+        if (steps.length !== existingSteps.length) {
+          throw Object.assign(
+            new Error(
+              'This recipe has bake history. Existing Method steps may be edited, but steps cannot be added or removed.'
+            ),
+            { status: 409 }
+          );
+        }
+
+        for (let idx = 0; idx < existingSteps.length; idx++) {
+          const incoming = steps[idx];
+          const current = existingSteps[idx];
+          const incomingOrder = incoming.order ?? idx;
+
+          if (Number(incomingOrder) !== Number(current.order)) {
+            throw Object.assign(
+              new Error(
+                'This recipe has bake history. Existing Method steps cannot be reordered.'
+              ),
+              { status: 409 }
+            );
+          }
+
+          await tx.recipeStep.update({
+            where: { id: current.id },
+            data: {
+              instruction: incoming.instruction,
+              timerSeconds:
+                incoming.timerSeconds !== null &&
+                incoming.timerSeconds !== undefined &&
+                incoming.timerSeconds !== ''
+                  ? Number(incoming.timerSeconds)
+                  : null
+            }
+          });
+        }
+
+        preserveHistoricalSteps = true;
+      } else {
+        await tx.recipeStep.deleteMany({
+          where: { recipeId: existing.id }
+        });
       }
-      await tx.recipeStep.deleteMany({ where: { recipeId: existing.id } });
     }
 
     return tx.recipe.update({
@@ -129,7 +172,7 @@ const updateRecipe = asyncHandler(async (req, res) => {
         ...(ingredients && {
           ingredients: { create: ingredients.map((i, idx) => ({ name: i.name, quantity: Number(i.quantity), unit: i.unit, note: i.note || null, order: i.order ?? idx })) },
         }),
-        ...(steps && {
+        ...(steps && !preserveHistoricalSteps && {
           steps: { create: steps.map((s, idx) => ({ instruction: s.instruction, timerSeconds: s.timerSeconds ? Number(s.timerSeconds) : null, referenceImageId: s.referenceImageId || null, order: s.order ?? idx })) },
         }),
       },

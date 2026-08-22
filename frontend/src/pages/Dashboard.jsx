@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as api from '../api/client';
 import { ProgressBar } from '../components/ui';
@@ -23,52 +23,122 @@ export default function Dashboard() {
   async function toggleFavorite(recipe, e) {
     e.preventDefault();
     e.stopPropagation();
+
     try {
-      const res = await api.updateRecipe(recipe.id, { favorite: !recipe.favorite });
-      setRecipes((prev) => prev.map((r) => (r.id === recipe.id ? res.recipe : r)));
-    } catch { /* favorite toggle failing silently degrades gracefully — not core to the journey */ }
+      const res = await api.updateRecipe(recipe.id, {
+        favorite: !recipe.favorite
+      });
+
+      setRecipes((prev) =>
+        prev.map((r) => (r.id === recipe.id ? res.recipe : r))
+      );
+    } catch {
+      // Non-blocking dashboard enhancement.
+    }
   }
 
-  if (loading) return <div className="center-loading"><div className="spinner" /></div>;
+  if (loading) {
+    return (
+      <div className="center-loading">
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   const totalSteps = continuable?.steps?.length || 0;
-  const doneSteps = continuable?.steps?.filter((s) => s.completed).length || 0;
+  const doneSteps =
+    continuable?.steps?.filter((step) => step.completed).length || 0;
 
   return (
-    <div className="page-content">
+    <div className="page-content dashboard-page">
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)' }}>
+      <section className="dashboard-hero">
         <div>
           <p className="eyebrow">What shall we bake today?</p>
-          <h1>Hello, Chef Kats!</h1>
-        </div>
-        <Link to="/recipes/new" className="btn btn-gold">+ New Recipe</Link>
-      </div>
 
-      <section style={{ marginBottom: 'var(--space-6)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <h2>My Recipes</h2>
-          {recipes.length > 4 && <Link to="/recipes" className="muted" style={{ color: 'var(--rose)' }}>View all</Link>}
+          <h1 className="dashboard-greeting">
+            Hello, <span>Chef Kats!</span>
+          </h1>
+
+          <p className="dashboard-welcome">
+            Your recipes, memories, and next bake are waiting for you.
+          </p>
         </div>
+
+        <Link to="/recipes/new" className="btn btn-gold dashboard-new-recipe">
+          + New Recipe
+        </Link>
+      </section>
+
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <p className="dashboard-section-kicker">From your diary</p>
+            <h2>My Recipes</h2>
+          </div>
+
+          {recipes.length > 4 && (
+            <Link to="/recipes" className="dashboard-view-all">
+              View all
+            </Link>
+          )}
+        </div>
+
         {recipes.length === 0 ? (
           <div className="empty-state card">
             <p>Your recipe library is empty.</p>
-            <Link to="/recipes/new" className="btn btn-primary" style={{ marginTop: 'var(--space-3)' }}>Create your first recipe</Link>
+
+            <Link
+              to="/recipes/new"
+              className="btn btn-primary"
+              style={{ marginTop: 'var(--space-3)' }}
+            >
+              Create your first recipe
+            </Link>
           </div>
         ) : (
-          <div className="recipe-grid">
-            {recipes.slice(0, 4).map((r) => (
-              <Link to={`/recipes/${r.id}`} key={r.id} className="recipe-card">
-                <div className="cover" style={r.coverImage ? { backgroundImage: `url(${r.coverImage.url})` } : {}}>
-                  {!r.coverImage && '🍰'}
+          <div className="recipe-grid dashboard-recipe-grid">
+            {recipes.slice(0, 4).map((recipe) => (
+              <Link
+                to={`/recipes/${recipe.id}`}
+                key={recipe.id}
+                className="recipe-card dashboard-recipe-card"
+              >
+                <div
+                  className={`cover ${
+                    recipe.coverImage ? 'has-cover' : 'recipe-cover-fallback'
+                  }`}
+                  style={
+                    recipe.coverImage
+                      ? {
+                          backgroundImage: `url(${recipe.coverImage.url})`
+                        }
+                      : undefined
+                  }
+                >
+                  {!recipe.coverImage && (
+                    <div className="recipe-placeholder">
+                      <span className="recipe-placeholder-mark">BD</span>
+                      <span>From Chef Kats' kitchen</span>
+                    </div>
+                  )}
                 </div>
-                <button className="favorite-dot" onClick={(e) => toggleFavorite(r, e)} aria-label="Toggle favorite">
-                  {r.favorite ? '♥' : '♡'}
+
+                <button
+                  className="favorite-dot"
+                  onClick={(event) => toggleFavorite(recipe, event)}
+                  aria-label="Toggle favorite"
+                >
+                  {recipe.favorite ? '♥' : '♡'}
                 </button>
+
                 <div className="body">
-                  <div className="title">{r.title}</div>
-                  <div className="date">{new Date(r.updatedAt).toLocaleDateString()}</div>
+                  <div className="title">{recipe.title}</div>
+
+                  <div className="date">
+                    {new Date(recipe.updatedAt).toLocaleDateString()}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -77,29 +147,67 @@ export default function Dashboard() {
       </section>
 
       {continuable && (
-        <section style={{ marginBottom: 'var(--space-6)' }}>
-          <h2>Continue Your Journey</h2>
-          <div className="card" style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
-            <div className="cover" style={{ width: 64, height: 64, borderRadius: 'var(--radius-sm)', flexShrink: 0, backgroundImage: continuable.recipe.coverImage ? `url(${continuable.recipe.coverImage.url})` : undefined }}>
-              {!continuable.recipe.coverImage && '🍰'}
+        <section className="dashboard-section">
+          <div className="dashboard-section-heading">
+            <div>
+              <p className="dashboard-section-kicker">Pick up where you left off</p>
+              <h2>Continue Your Journey</h2>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600 }}>{continuable.recipe.title}</div>
-              <div className="muted" style={{ marginBottom: 6 }}>Step {doneSteps + 1} of {totalSteps}</div>
-              <ProgressBar percent={(doneSteps / Math.max(totalSteps, 1)) * 100} />
+          </div>
+
+          <div className="card dashboard-continue-card">
+            <div
+              className={`dashboard-continue-cover ${
+                continuable.recipe.coverImage ? 'has-cover' : ''
+              }`}
+              style={
+                continuable.recipe.coverImage
+                  ? {
+                      backgroundImage: `url(${continuable.recipe.coverImage.url})`
+                    }
+                  : undefined
+              }
+            >
+              {!continuable.recipe.coverImage && <span>BD</span>}
             </div>
-            <button className="btn btn-primary btn-sm" onClick={() => navigate(`/cook/${continuable.id}`)}>Continue</button>
+
+            <div className="dashboard-continue-main">
+              <div className="dashboard-continue-title">
+                {continuable.recipe.title}
+              </div>
+
+              <div className="muted dashboard-continue-step">
+                Step {doneSteps + 1} of {totalSteps}
+              </div>
+
+              <ProgressBar
+                percent={(doneSteps / Math.max(totalSteps, 1)) * 100}
+              />
+            </div>
+
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => navigate(`/cook/${continuable.id}`)}
+            >
+              Continue
+            </button>
           </div>
         </section>
       )}
 
-      <section>
-        <h2>Quick Tools</h2>
-        <div className="recipe-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <p className="dashboard-section-kicker">Kitchen companions</p>
+            <h2>Quick Tools</h2>
+          </div>
+        </div>
+
+        <div className="dashboard-tools">
           <QuickTool to="/converter" icon="⇄" label="Unit Converter" />
-          <QuickTool to="/journal" icon="📖" label="My Journal (Bakes)" />
-          <QuickTool to="/groceries" icon="🛒" label="Groceries List" />
-          <QuickTool to="/nutrition" icon="📊" label="Nutrition" />
+          <QuickTool to="/journal" icon="♡" label="My Journal" />
+          <QuickTool to="/groceries" icon="✓" label="Grocery List" />
+          <QuickTool to="/nutrition" icon="+" label="Nutrition" />
         </div>
       </section>
     </div>
@@ -108,9 +216,12 @@ export default function Dashboard() {
 
 function QuickTool({ to, icon, label }) {
   return (
-    <Link to={to} className="card" style={{ textDecoration: 'none', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-2)' }}>
-      <span style={{ fontSize: '1.4rem' }} aria-hidden="true">{icon}</span>
-      <span style={{ color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 600 }}>{label}</span>
+    <Link to={to} className="card dashboard-tool">
+      <span className="dashboard-tool-icon" aria-hidden="true">
+        {icon}
+      </span>
+
+      <span className="dashboard-tool-label">{label}</span>
     </Link>
   );
 }
