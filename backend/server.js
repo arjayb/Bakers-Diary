@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -17,7 +18,7 @@ const app = express();
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
-app.get('/api/health', (req, res) => res.json({ success: true, message: 'Baker\'s Diary API is running' }));
+app.get('/api/health', (req, res) => res.json({ success: true, message: "Baker's Diary API is running" }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
@@ -27,6 +28,16 @@ app.use('/api/conversions', conversionRoutes);
 app.use('/api/groceries', groceryRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/settings', settingsRoutes);
+
+if (process.env.NODE_ENV === 'production') {
+  const frontendDist = path.join(__dirname, '../frontend/dist');
+  app.use(express.static(frontendDist));
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    return res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+}
 
 app.use(notFound);
 app.use(errorHandler);

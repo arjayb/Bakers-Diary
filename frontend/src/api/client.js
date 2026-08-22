@@ -1,7 +1,8 @@
 // Centralized API client (§33) — every fetch to the backend goes through
 // here so auth headers, error shape, and the base URL are defined once.
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const configuredBase = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
+const BASE_URL = configuredBase.replace(/\/$/, '');
 
 function getToken() {
   return localStorage.getItem('bd_token');

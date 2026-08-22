@@ -1,0 +1,17 @@
+services:
+  - type: web
+    runtime: node
+    name: bakers-diary-arjayb
+    region: singapore
+    plan: free
+    buildCommand: npm --prefix backend ci && npm --prefix backend run db:generate && npm --prefix frontend ci && npm --prefix frontend run build
+    startCommand: npm --prefix backend start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
