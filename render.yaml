@@ -4,7 +4,7 @@ services:
     name: bakers-diary-arjayb
     region: singapore
     plan: free
-    buildCommand: npm --prefix backend ci && npm --prefix backend run db:generate && npm --prefix frontend ci && npm --prefix frontend run build
+    buildCommand: npm --prefix backend ci --include=dev && npm --prefix backend run db:generate && npm --prefix frontend ci --include=dev && npm --prefix frontend run build
     startCommand: npm --prefix backend start
     healthCheckPath: /api/health
     autoDeployTrigger: commit
