@@ -9,3 +9,14 @@ build/
 # Local recovery / repair artifacts
 *.pre-p19
 *.pre-p19-*
+
+# USDA FoodData Central raw source corpus
+data-source/usda/archive/
+data-source/usda/full-download/
+
+# Curated Baker's Diary nutrition artifacts remain trackable
+!data-source/usda/curated/
+!data-source/usda/curated/**
+# Local repair/savepoint artifacts
+*.pre-p20-*
+*.pre-ship-*

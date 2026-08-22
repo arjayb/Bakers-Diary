@@ -1,13 +1,117 @@
-// Nutrition provider abstraction (Â§20). Two adapters behind one interface so
-// UI code never imports 'usda' or 'openfoodfacts' directly â€” it only calls
+// Nutrition provider abstraction (Ã‚Â§20). Two adapters behind one interface so
+// UI code never imports 'usda' or 'openfoodfacts' directly Ã¢â‚¬â€ it only calls
 // resolveIngredient() and gets back a normalized shape or `unmatched`.
 //
-// Â§20 is explicit: "Do not ask an LLM to invent nutritional values." Nothing
-// in this file or its callers generates a nutrition number â€” every value
+// Ã‚Â§20 is explicit: "Do not ask an LLM to invent nutritional values." Nothing
+// in this file or its callers generates a nutrition number Ã¢â‚¬â€ every value
 // either comes from a provider response or is arithmetic on provider
 // values (see calculateRecipeNutrition below).
 
 const fetch = require('node-fetch');
+
+/* BAKERS_DIARY_CURATED_NUTRITION */
+const fsNutrition = require('fs');
+const pathNutrition = require('path');
+
+const curatedNutritionPath = pathNutrition.resolve(
+  __dirname,
+  '../../../data-source/usda/curated/bakers_diary_seed14_nutrition_runtime.csv'
+);
+
+function normalizeCuratedName(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function parseCuratedCsvLine(line) {
+  const values = [];
+  let value = '';
+  let quoted = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+
+    if (ch === '"') {
+      if (quoted && line[i + 1] === '"') {
+        value += '"';
+        i++;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (ch === ',' && !quoted) {
+      values.push(value);
+      value = '';
+    } else {
+      value += ch;
+    }
+  }
+
+  values.push(value);
+  return values;
+}
+
+function loadCuratedNutrition() {
+  const map = new Map();
+
+  if (!fsNutrition.existsSync(curatedNutritionPath)) {
+    return map;
+  }
+
+  const text = fsNutrition
+    .readFileSync(curatedNutritionPath, 'utf8')
+    .replace(/^\uFEFF/, '');
+
+  const lines = text.split(/\r?\n/).filter(Boolean);
+
+  if (lines.length < 2) return map;
+
+  const headers = parseCuratedCsvLine(lines[0]);
+
+  for (const line of lines.slice(1)) {
+    const values = parseCuratedCsvLine(line);
+    const row = {};
+
+    headers.forEach((header, index) => {
+      row[header] = values[index] ?? '';
+    });
+
+    const key = normalizeCuratedName(row.ingredient);
+
+    if (key) {
+      map.set(key, row);
+    }
+  }
+
+  return map;
+}
+
+const curatedNutrition = loadCuratedNutrition();
+
+function resolveCuratedIngredient(name) {
+  const row = curatedNutrition.get(normalizeCuratedName(name));
+
+  if (!row) return null;
+
+  return {
+    provider: 'usda',
+    providerFoodId: null,
+    matchedLabel: row.ingredient,
+
+    caloriesPer100g: Number(row.energy_kcal || 0),
+    proteinPer100g: Number(row.protein_g || 0),
+    fatPer100g: Number(row.fat_g || 0),
+    carbsPer100g: Number(row.carbohydrate_g || 0),
+    fiberPer100g: Number(row.fiber_g || 0),
+    sugarPer100g: Number(row.sugars_g || 0),
+
+    sodiumMgPer100g: 0,
+    satFatPer100g: 0,
+    cholesterolMgPer100g: 0,
+
+    unavailableReason: null
+  };
+}
+/* END BAKERS_DIARY_CURATED_NUTRITION */
+
 
 const USDA_SEARCH_URL = 'https://api.nal.usda.gov/fdc/v1/foods/search';
 const OFF_SEARCH_URL = 'https://world.openfoodfacts.org/cgi/search.pl';
@@ -27,8 +131,8 @@ function extractUsdaNutrient(food, nutrientId) {
 /**
  * Queries USDA FoodData Central for the best textual match. Returns a
  * normalized-per-100g shape, or null if unmatched/unavailable. Never
- * throws for "no results" â€” only for actual network/config failure, which
- * callers treat the same as "provider unavailable" (Â§20 UX failure state).
+ * throws for "no results" Ã¢â‚¬â€ only for actual network/config failure, which
+ * callers treat the same as "provider unavailable" (Ã‚Â§20 UX failure state).
  */
 async function searchUsda(query) {
   const apiKey = process.env.USDA_FDC_API_KEY;
@@ -62,9 +166,9 @@ async function searchUsda(query) {
 }
 
 /**
- * Open Food Facts â€” supplementary, for branded products (Â§22). No API key
+ * Open Food Facts Ã¢â‚¬â€ supplementary, for branded products (Ã‚Â§22). No API key
  * required. Used as fallback when USDA has no match, and as the intended
- * path for a future barcode flow (architecture only in v0.1 â€” see Â§22).
+ * path for a future barcode flow (architecture only in v0.1 Ã¢â‚¬â€ see Ã‚Â§22).
  */
 async function searchOpenFoodFacts(query) {
   const url = `${OFF_SEARCH_URL}?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=1`;
@@ -124,13 +228,15 @@ async function searchOpenFoodFacts(query) {
 
 /**
  * Resolves one ingredient name to a normalized nutrition match, trying USDA
- * first then Open Food Facts (Â§20 primary + Â§22 supplementary). Returns
- * { provider: 'unmatched', matchedLabel: null, ... } â€” never throws for a
+ * first then Open Food Facts (Ã‚Â§20 primary + Ã‚Â§22 supplementary). Returns
+ * { provider: 'unmatched', matchedLabel: null, ... } Ã¢â‚¬â€ never throws for a
  * legitimate "nothing found," so callers can persist and display an
- * unmatched state honestly (Â§21) instead of erroring the whole recipe.
+ * unmatched state honestly (Ã‚Â§21) instead of erroring the whole recipe.
  */
 async function resolveIngredient(ingredientName) {
   try {
+    const curatedResult = resolveCuratedIngredient(ingredientName);
+    if (curatedResult) return curatedResult;
     const usdaResult = await searchUsda(ingredientName);
     if (usdaResult && !usdaResult.unavailable) return usdaResult;
 
@@ -157,13 +263,35 @@ async function resolveIngredient(ingredientName) {
   }
 }
 
-// --- Deterministic quantity/serving math (Â§20 diagram) ---------------------
-// Ingredient quantity -> grams -> scale per-100g values -> sum -> Ã· servings.
+// --- Deterministic quantity/serving math (Ã‚Â§20 diagram) ---------------------
+// Ingredient quantity -> grams -> scale per-100g values -> sum -> ÃƒÂ· servings.
 // Pure arithmetic on provider-supplied numbers. No estimation, no LLM call.
 
 const { convert, isWeightUnit, isVolumeUnit } = require('./conversionService');
 
 function ingredientGrams(ingredient) {
+  /* BAKERS_DIARY_PIECE_WEIGHTS */
+  const pieceUnit = String(ingredient.unit || '').trim().toLowerCase();
+
+  if (
+    pieceUnit === 'piece' ||
+    pieceUnit === 'pieces' ||
+    pieceUnit === 'pc' ||
+    pieceUnit === 'pcs'
+  ) {
+    const ingredientKey = String(ingredient.name || '').trim().toLowerCase();
+
+    const pieceWeightGrams = {
+      egg: 50,
+      eggs: 50,
+      lemon: 58,
+      lemons: 58
+    }[ingredientKey];
+
+    if (pieceWeightGrams) {
+      return Number(ingredient.quantity) * pieceWeightGrams;
+    }
+  }
   if (isWeightUnit(ingredient.unit)) {
     return convert({ value: ingredient.quantity, fromUnit: ingredient.unit, toUnit: 'g' }).value;
   }
@@ -171,7 +299,7 @@ function ingredientGrams(ingredient) {
     try {
       return convert({ value: ingredient.quantity, fromUnit: ingredient.unit, toUnit: 'g', ingredientName: ingredient.name }).value;
     } catch {
-      return null; // no density known â€” this ingredient can't be weighed, so it's excluded from totals, not guessed
+      return null; // no density known Ã¢â‚¬â€ this ingredient can't be weighed, so it's excluded from totals, not guessed
     }
   }
   return null; // 'piece'/'pinch' units have no reliable gram equivalent without more data
@@ -183,7 +311,7 @@ function ingredientGrams(ingredient) {
  * by ingredientName ; servings: number
  *
  * Returns { totals: {...}, perServing: {...}, unmatchedIngredients: string[],
- * excludedIngredients: string[] } â€” excluded = matched nutritionally but no
+ * excludedIngredients: string[] } Ã¢â‚¬â€ excluded = matched nutritionally but no
  * gram equivalent could be computed (e.g. "2 pieces eggs" without a
  * per-piece weight), so it's left out of totals rather than guessed.
  */

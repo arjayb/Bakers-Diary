@@ -1,0 +1,174 @@
+{
+    "schemaVersion":  1,
+    "purpose":  "Baker\u0027s Diary canonical baking ingredient seed vocabulary",
+    "sourcePolicy":  [
+                         "USDA generic food composition preferred",
+                         "Philippine manufacturer data permitted for branded products",
+                         "No nutrition match accepted solely from loose keyword similarity",
+                         "Unknown is preferred over an incorrect nutrition match"
+                     ],
+    "ingredientCount":  20,
+    "ingredients":  [
+                        {
+                            "aliases":  [
+                                            "AP flour",
+                                            "all purpose flour",
+                                            "plain flour"
+                                        ],
+                            "family":  "flour",
+                            "canonicalName":  "All-purpose flour"
+                        },
+                        {
+                            "aliases":  [
+                                            "strong flour",
+                                            "strong bread flour"
+                                        ],
+                            "family":  "flour",
+                            "canonicalName":  "Bread flour"
+                        },
+                        {
+                            "aliases":  [
+                                            "wholemeal flour",
+                                            "whole-wheat flour"
+                                        ],
+                            "family":  "flour",
+                            "canonicalName":  "Whole wheat flour"
+                        },
+                        {
+                            "aliases":  [
+                                            "white sugar",
+                                            "sugar",
+                                            "granulated white sugar"
+                                        ],
+                            "family":  "sugar",
+                            "canonicalName":  "Granulated sugar"
+                        },
+                        {
+                            "aliases":  [
+                                            "light brown sugar",
+                                            "dark brown sugar"
+                                        ],
+                            "family":  "sugar",
+                            "canonicalName":  "Brown sugar"
+                        },
+                        {
+                            "aliases":  [
+                                            "icing sugar",
+                                            "confectioners sugar",
+                                            "confectioner\u0027s sugar"
+                                        ],
+                            "family":  "sugar",
+                            "canonicalName":  "Powdered sugar"
+                        },
+                        {
+                            "aliases":  [
+                                            "butter",
+                                            "sweet cream butter"
+                                        ],
+                            "family":  "fat",
+                            "canonicalName":  "Unsalted butter"
+                        },
+                        {
+                            "aliases":  [
+                                            "full cream milk",
+                                            "full-fat milk"
+                                        ],
+                            "family":  "dairy",
+                            "canonicalName":  "Whole milk"
+                        },
+                        {
+                            "aliases":  [
+                                            "heavy whipping cream",
+                                            "whipping cream"
+                                        ],
+                            "family":  "dairy",
+                            "canonicalName":  "Heavy cream"
+                        },
+                        {
+                            "aliases":  [
+                                            "eggs",
+                                            "whole egg",
+                                            "whole eggs"
+                                        ],
+                            "family":  "egg",
+                            "canonicalName":  "Egg"
+                        },
+                        {
+                            "aliases":  [
+                                            "dark baking chocolate",
+                                            "bittersweet chocolate",
+                                            "semisweet chocolate"
+                                        ],
+                            "family":  "chocolate",
+                            "canonicalName":  "Dark chocolate"
+                        },
+                        {
+                            "aliases":  [
+                                            "unsweetened cocoa",
+                                            "unsweetened cocoa powder"
+                                        ],
+                            "family":  "chocolate",
+                            "canonicalName":  "Cocoa powder"
+                        },
+                        {
+                            "aliases":  [
+                                            "dry yeast",
+                                            "active yeast"
+                                        ],
+                            "family":  "leavener",
+                            "canonicalName":  "Active dry yeast"
+                        },
+                        {
+                            "aliases":  [
+
+                                        ],
+                            "family":  "leavener",
+                            "canonicalName":  "Baking powder"
+                        },
+                        {
+                            "aliases":  [
+                                            "bicarbonate of soda",
+                                            "sodium bicarbonate"
+                                        ],
+                            "family":  "leavener",
+                            "canonicalName":  "Baking soda"
+                        },
+                        {
+                            "aliases":  [
+                                            "table salt",
+                                            "fine salt"
+                                        ],
+                            "family":  "seasoning",
+                            "canonicalName":  "Salt"
+                        },
+                        {
+                            "aliases":  [
+                                            "vanilla essence"
+                                        ],
+                            "family":  "flavoring",
+                            "canonicalName":  "Vanilla extract"
+                        },
+                        {
+                            "aliases":  [
+                                            "corn starch",
+                                            "cornflour"
+                                        ],
+                            "family":  "starch",
+                            "canonicalName":  "Cornstarch"
+                        },
+                        {
+                            "aliases":  [
+
+                                        ],
+                            "family":  "dairy",
+                            "canonicalName":  "Cream cheese"
+                        },
+                        {
+                            "aliases":  [
+                                            "condensed milk"
+                                        ],
+                            "family":  "dairy",
+                            "canonicalName":  "Sweetened condensed milk"
+                        }
+                    ]
+}
