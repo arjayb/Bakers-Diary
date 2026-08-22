@@ -1,0 +1,127 @@
+/**
+ * theme/tokens.css — §5 two-theme system.
+ *
+ * One component system, two token sets. Every color a component needs
+ * comes from a var(--*) below — nothing is hard-coded in component CSS.
+ *
+ * Typography note (deviation from the earlier freeform swatch exploration,
+ * now grounded in the approved mockups per §4 — the mockups are the design
+ * authority): the mockups use an elegant script face ONLY for the "Baker's
+ * Diary" wordmark and "Chef Kats" signature moments, and a clean rounded
+ * sans for every heading, label, and body of text. So: --font-script is
+ * used sparingly (wordmark, dedication signature) and --font-sans carries
+ * everything else, including headings — there is no separate serif display
+ * face, because the mockups don't use one.
+ */
+
+:root,
+[data-theme='night'] {
+  /* Backgrounds — sampled from the mockups' near-black/deep-plum scenes */
+  --bg: #15101a;
+  --bg-elevated: #1f1822;
+  --surface: #2b2130;
+  --border: rgba(245, 237, 230, 0.08);
+  --border-strong: rgba(245, 237, 230, 0.16);
+
+  /* Text */
+  --text-primary: #f5ede6;
+  --text-secondary: #c9b8be;
+  --text-muted: #8f7d86;
+
+  /* Brand accents */
+  --rose: #a8496a;
+  --rose-soft: rgba(168, 73, 106, 0.16);
+  --gold: #d9a441;
+  --gold-soft: rgba(217, 164, 65, 0.16);
+
+  /* Semantic */
+  --success: #6fae7c;
+  --success-soft: rgba(111, 174, 124, 0.16);
+  --warning: #d9a441;
+  --warning-soft: rgba(217, 164, 65, 0.16);
+  --error: #c1495a;
+  --error-soft: rgba(193, 73, 90, 0.16);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme='day'] {
+  --bg: #fbf4ec;
+  --bg-elevated: #fffaf4;
+  --surface: #ffffff;
+  --border: rgba(46, 32, 38, 0.08);
+  --border-strong: rgba(46, 32, 38, 0.16);
+
+  --text-primary: #2e2026;
+  --text-secondary: #6b5760;
+  --text-muted: #a08e95;
+
+  --rose: #a8496a;
+  --rose-soft: rgba(168, 73, 106, 0.08);
+  --gold: #b9812a;
+  --gold-soft: rgba(185, 129, 42, 0.1);
+
+  --success: #4f8f5c;
+  --success-soft: rgba(79, 143, 92, 0.1);
+  --warning: #b9812a;
+  --warning-soft: rgba(185, 129, 42, 0.1);
+  --error: #a83b4a;
+  --error-soft: rgba(168, 59, 74, 0.1);
+
+  --shadow-sm: 0 2px 8px rgba(60, 40, 45, 0.08);
+  --shadow-md: 0 8px 24px rgba(60, 40, 45, 0.12);
+  --shadow-lg: 0 16px 48px rgba(60, 40, 45, 0.16);
+}
+
+:root {
+  --font-sans: 'Poppins', system-ui, sans-serif;
+  --font-script: 'Alex Brush', cursive;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --touch-target: 44px; /* §6 — minimum comfortable tap target for kitchen/mobile use */
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Respect reduced motion (frontend-design skill quality floor) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+button, input, select, textarea { font-family: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}

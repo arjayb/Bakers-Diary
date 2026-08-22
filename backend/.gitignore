@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime / generated
+coverage/
+dist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# PROVE repair backups
+*.pre-p5-fix
+*.pre-media-fix

@@ -1,0 +1,286 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// User â€” single private user for v0.1 (Â§3). Modeled as a real table (not a
+// hardcoded constant) so authentication, settings, and ownership relations
+// stay honest even though only one row will ever exist in v0.1.
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  displayName  String   @default("Chef Kats")
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  settings          UserSettings?
+  recipes           Recipe[]
+  sessions          CookingSession[]
+  groceryItems      GroceryItem[]
+}
+
+// One-to-one preferences row (Â§5 theme persistence, Â§8 dedication toggle).
+model UserSettings {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  theme                 Theme    @default(night)
+  showDedicationOnLogin Boolean  @default(true)
+  updatedAt             DateTime @updatedAt
+}
+
+enum Theme {
+  night
+  day
+}
+
+// ---------------------------------------------------------------------------
+// Recipe â€” the Master Recipe (Â§10, Â§16). Canonical, current version only;
+// what happened during any particular attempt lives on CookingSession, never
+// here, so a Bake's deviations can never silently rewrite the master.
+// ---------------------------------------------------------------------------
+
+enum RecipeStatus {
+  draft
+  published
+}
+
+model Recipe {
+  id          String       @id @default(uuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+
+  title       String
+  description String?
+  coverImageId String?
+  coverImage  MediaAsset?  @relation("RecipeCover", fields: [coverImageId], references: [id])
+  category    String?
+  yield       String?
+  servings    Int?
+  prepTimeMin Int?
+  cookTimeMin Int?
+
+  favorite    Boolean      @default(false)
+  status      RecipeStatus @default(draft)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  ingredients RecipeIngredient[]
+  steps       RecipeStep[]
+  sessions    CookingSession[]
+  nutritionResolutions NutritionResolution[]
+
+  @@index([userId])
+}
+
+// Each ingredient is its own structured row (Â§11) â€” never a blob of free
+// text â€” so conversion and nutrition can both operate on quantity+unit+food
+// identity independently.
+model RecipeIngredient {
+  id         String   @id @default(uuid())
+  recipeId   String
+  recipe     Recipe   @relation(fields: [recipeId], references: [id])
+
+  name       String            // e.g. "All-purpose flour" â€” the label Chef Kats typed
+  quantity   Float
+  unit       String            // canonical unit key, see conversionService.js
+  order      Int               @default(0)
+  note       String?           // e.g. "sifted", "room temperature"
+
+  // Nutrition resolution is looked up by name, not stored redundantly here â€”
+  // see NutritionResolution, keyed by (recipeId, ingredientName) so a
+  // resolved match is reused rather than re-resolved on every page load
+  // (Â§21).
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([recipeId])
+}
+
+model RecipeStep {
+  id            String   @id @default(uuid())
+  recipeId      String
+  recipe        Recipe   @relation(fields: [recipeId], references: [id])
+
+  order         Int
+  instruction   String
+  referenceImageId String?
+  referenceImage MediaAsset? @relation("StepReference", fields: [referenceImageId], references: [id])
+  timerSeconds  Int?     // optional â€” null means this step has no timer
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessionSteps  SessionStep[]
+
+  @@index([recipeId])
+}
+
+// ---------------------------------------------------------------------------
+// CookingSession / Bake (Â§13, Â§16) â€” one row per attempt at a Recipe. Holds
+// its own copy of step progress/notes/photos so it can diverge from the
+// Master Recipe (e.g. "added cinnamon this time") without ever writing back
+// to Recipe/RecipeStep unless Chef Kats explicitly promotes a change (Â§19,
+// deferred to a documented data model in v0.1 â€” see PROMOTION NOTE below).
+// ---------------------------------------------------------------------------
+
+enum SessionStatus {
+  in_progress
+  completed
+  abandoned
+}
+
+model CookingSession {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  recipeId      String
+  recipe        Recipe        @relation(fields: [recipeId], references: [id])
+
+  bakeNumber    Int           // sequential per-recipe, e.g. "Bake #4" â€” see
+                               // sessionController.js for the counter logic
+  status        SessionStatus @default(in_progress)
+  currentStepOrder Int        @default(1)
+
+  finalPhotoId  String?
+  finalPhoto    MediaAsset?   @relation("SessionFinalPhoto", fields: [finalPhotoId], references: [id])
+  finalNotes    String?
+  rating        Int?          // 1-5, set at completion
+  whatToChangeNextTime String?
+
+  startedAt     DateTime      @default(now())
+  completedAt   DateTime?
+  updatedAt     DateTime      @updatedAt
+
+  steps         SessionStep[]
+
+  @@index([userId])
+  @@index([recipeId])
+}
+
+// One row per RecipeStep, scoped to this session â€” this is what makes a Bake
+// independently annotatable (notes/photos per step) without touching the
+// Master Recipe's RecipeStep rows at all.
+model SessionStep {
+  id          String    @id @default(uuid())
+  sessionId   String
+  session     CookingSession @relation(fields: [sessionId], references: [id])
+  recipeStepId String
+  recipeStep  RecipeStep @relation(fields: [recipeStepId], references: [id])
+
+  completed   Boolean   @default(false)
+  notes       String?
+  completedAt DateTime?
+
+  photos      MediaAsset[] @relation("SessionStepPhotos")
+
+  @@index([sessionId])
+}
+
+// ---------------------------------------------------------------------------
+// Recipe evolution (Â§19) â€” data model only for v0.1, per the spec's explicit
+// permission to defer the promotion UI if it would add excessive v0.1
+// complexity. PROMOTION NOTE: this table lets a session-step note be flagged
+// as a candidate change; "Promote to Master Recipe" (writing it into the
+// live RecipeStep/RecipeIngredient) is NOT implemented as a UI action in
+// v0.1 â€” see KNOWN ISSUES / DEFERRED in the handoff.
+// ---------------------------------------------------------------------------
+
+model RecipeChangeCandidate {
+  id            String   @id @default(uuid())
+  recipeId      String
+  sessionId     String
+  description   String   // e.g. "Added 1/2 tsp cinnamon"
+  promoted      Boolean  @default(false)
+  promotedAt    DateTime?
+  createdAt     DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Grocery list (Â§23) â€” intentionally modest.
+// ---------------------------------------------------------------------------
+
+model GroceryItem {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  label     String
+  quantity  String?  // free text, e.g. "2 boxes" â€” not unit-converted
+  checked   Boolean  @default(false)
+  sourceRecipeId String? // set when added "from recipe", null for manual items
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Nutrition resolution (Â§20, Â§21) â€” one resolved food match per
+// (recipe, ingredient name), so the same ingredient isn't re-resolved
+// against the provider API on every page load.
+// ---------------------------------------------------------------------------
+
+enum NutritionProviderName {
+  usda
+  openfoodfacts
+  unmatched
+}
+
+model NutritionResolution {
+  id             String   @id @default(uuid())
+  recipeId       String
+  recipe         Recipe   @relation(fields: [recipeId], references: [id])
+  ingredientName String   // matches RecipeIngredient.name at resolve time
+
+  provider       NutritionProviderName @default(unmatched)
+  providerFoodId String?  // e.g. USDA fdcId, or an Open Food Facts barcode
+  matchedLabel   String?  // human-readable, e.g. "Dark Chocolate 70-85%"
+
+  // Per-100g normalized values, so quantity math is one multiplication away
+  // regardless of provider â€” see nutritionProvider.js
+  caloriesPer100g Float?
+  proteinPer100g  Float?
+  fatPer100g      Float?
+  carbsPer100g    Float?
+  fiberPer100g    Float?
+  sugarPer100g    Float?
+  sodiumMgPer100g Float?
+  satFatPer100g   Float?
+  cholesterolMgPer100g Float?
+  unavailableReason String?
+
+
+  resolvedAt     DateTime @default(now())
+
+  @@unique([recipeId, ingredientName])
+}
+
+// ---------------------------------------------------------------------------
+// Media (Â§24) â€” one table for every image the app stores, regardless of
+// where it's used (recipe cover, step reference, session photo, final
+// photo). Storage is Cloudinary (see mediaService.js for why).
+// ---------------------------------------------------------------------------
+
+model MediaAsset {
+  id          String   @id @default(uuid())
+  url         String
+  publicId    String   // Cloudinary public_id, needed to delete/transform later
+  width       Int?
+  height      Int?
+  bytes       Int?
+  createdAt   DateTime @default(now())
+
+  recipeCoverOf      Recipe[]      @relation("RecipeCover")
+  stepReferenceOf    RecipeStep[]  @relation("StepReference")
+  sessionFinalPhotoOf CookingSession[] @relation("SessionFinalPhoto")
+  sessionStepPhotoOf SessionStep[] @relation("SessionStepPhotos")
+}
+
