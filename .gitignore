@@ -20,3 +20,5 @@ data-source/usda/full-download/
 # Local repair/savepoint artifacts
 *.pre-p20-*
 *.pre-ship-*
+*.pre-add5 
+*.pre-step-edit-* 
