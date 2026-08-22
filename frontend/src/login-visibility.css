@@ -1,41 +1,227 @@
-/* BD-UI-004 — Login Background Visibility Pass
-   Keeps the existing cinematic composition while making the cupcake,
-   whisk, bowl, flour and surrounding baking props visibly readable. */
+/* BD-UI-005 — Login Screen Visual Match Pass
+   Approved under PERM-BD-003.
+   Scope: login-page presentation only. Authentication, backend and database
+   behavior are intentionally untouched.
 
-.login-atmosphere {
-  filter: blur(2px) brightness(.9) saturate(1.06);
-  transform: scale(1.035);
-  background-position: center 24%;
+   Target composition:
+   - baking photograph remains sharp (no page-background blur)
+   - baking props remain legible, especially the whisk at lower-left and
+     cupcake at lower-right
+   - centered brand block sits high in the frame
+   - compact dark-glass login card sits in the lower-middle
+   - footer remains visually anchored near the bottom
+*/
+
+.login-page {
+  min-height: 100svh;
+  padding: clamp(22px, 3.2svh, 38px) 16px max(22px, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  background: #090609;
 }
 
+/* Keep the supplied baking image crisp. */
+.login-atmosphere {
+  inset: 0;
+  filter: none;
+  transform: none;
+  background-size: cover;
+  background-position: center center;
+}
+
+/* Preserve the photograph instead of washing it out with a heavy veil. */
 .login-atmosphere::after {
   background: linear-gradient(
     180deg,
     rgba(5, 2, 4, .04) 0%,
-    rgba(7, 3, 6, .08) 30%,
-    rgba(7, 3, 6, .18) 60%,
-    rgba(6, 2, 5, .48) 100%
+    rgba(7, 3, 6, .06) 28%,
+    rgba(7, 3, 6, .12) 56%,
+    rgba(6, 2, 5, .38) 100%
   );
 }
 
 .login-page::before {
   background:
-    radial-gradient(circle at 82% 38%, rgba(172, 56, 105, .11), transparent 26%),
-    linear-gradient(180deg, rgba(8, 4, 7, .02), rgba(8, 4, 7, .18) 72%, rgba(8, 4, 7, .48));
-  box-shadow: inset 0 0 88px rgba(0, 0, 0, .24);
+    radial-gradient(circle at 50% 18%, rgba(169, 47, 88, .08), transparent 30%),
+    linear-gradient(180deg, rgba(8, 4, 7, .01), rgba(8, 4, 7, .08) 66%, rgba(8, 4, 7, .34));
+  box-shadow: inset 0 0 72px rgba(0, 0, 0, .18);
+}
+
+.login-shell {
+  width: min(100%, 430px);
+  min-height: calc(100svh - clamp(44px, 6.4svh, 76px));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* High, centered brand block — closer to the supplied reference. */
+.login-brand {
+  width: 100%;
+  margin: clamp(4px, 1.4svh, 14px) 0 0;
+}
+
+.login-emblem {
+  margin-bottom: 7px;
+  font-size: 1.35rem;
+}
+
+.login-wordmark {
+  max-width: 330px;
+  font-size: clamp(4rem, 19vw, 5.25rem);
+  line-height: .82;
+  text-shadow: 0 8px 28px rgba(0, 0, 0, .44), 0 4px 24px rgba(168, 73, 106, .16);
+}
+
+.login-divider {
+  width: min(78%, 315px);
+  margin: 20px auto 12px;
+}
+
+.login-tagline {
+  font-size: clamp(.7rem, 2.8vw, .8rem);
+  line-height: 1.5;
+  letter-spacing: .11em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, .92);
+}
+
+/* Lower-middle compact card. The translucent surface gives a glassy feel
+   without blurring the baking photograph behind it. */
+.login-card {
+  width: min(100%, 378px);
+  margin-top: clamp(92px, 14.5svh, 158px);
+  padding: 27px 22px 25px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(46, 27, 33, .88), rgba(20, 11, 15, .91));
+  border: 1px solid rgba(245, 237, 230, .20);
+  box-shadow: 0 26px 64px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255, 255, 255, .035);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.login-card h2 {
+  margin-bottom: 7px;
+  font-size: 1.5rem;
+}
+
+.login-intro {
+  margin-bottom: 20px;
+  font-size: .94rem;
+}
+
+.login-password .input {
+  min-height: 57px;
+  border-radius: 15px;
+  background: rgba(12, 7, 10, .58);
+  border-color: rgba(245, 237, 230, .26);
+}
+
+.login-submit {
+  min-height: 58px;
+  border-radius: 15px;
+  font-size: 1rem;
+  background: linear-gradient(90deg, #a92f58, #bb416a, #ad365d);
+  box-shadow: 0 10px 26px rgba(169, 47, 88, .25);
+}
+
+.login-forgot {
+  margin-top: 22px;
+}
+
+.login-forgot-button {
+  font-size: .94rem;
+}
+
+.login-footer {
+  margin-top: auto;
+  padding-top: clamp(24px, 3.8svh, 42px);
+  margin-bottom: 0;
+  font-size: .88rem;
+  line-height: 1.45;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, .92);
 }
 
 @media (max-width: 430px) {
+  .login-page {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
   .login-atmosphere {
-    background-position: center 20%;
-    filter: blur(1.5px) brightness(.92) saturate(1.07);
+    background-position: center center;
+  }
+
+  .login-wordmark {
+    max-width: 300px;
+    font-size: clamp(3.85rem, 20vw, 4.75rem);
+  }
+
+  .login-divider {
+    margin-top: 17px;
+  }
+
+  .login-card {
+    width: min(100%, 366px);
+    margin-top: clamp(82px, 13svh, 128px);
+    padding: 25px 20px 24px;
+  }
+}
+
+@media (max-height: 720px) and (max-width: 520px) {
+  .login-page {
+    overflow: auto;
+  }
+
+  .login-shell {
+    min-height: 660px;
+  }
+
+  .login-brand {
+    margin-top: 0;
+  }
+
+  .login-wordmark {
+    font-size: 3.7rem;
+  }
+
+  .login-card {
+    margin-top: 62px;
+  }
+
+  .login-footer {
+    padding-top: 24px;
   }
 }
 
 @media (min-width: 900px) {
+  .login-page {
+    padding: 42px 24px 28px;
+  }
+
   .login-atmosphere {
-    background-position: center 34%;
-    filter: blur(2.5px) brightness(.84) saturate(1.03);
-    transform: scale(1.03);
+    background-position: center 40%;
+    filter: none;
+    transform: none;
+  }
+
+  .login-shell {
+    width: min(100%, 500px);
+    min-height: calc(100svh - 70px);
+  }
+
+  .login-wordmark {
+    font-size: 5.5rem;
+  }
+
+  .login-card {
+    width: 410px;
+    margin-top: clamp(76px, 10svh, 112px);
+    padding: 31px 34px 29px;
+  }
+
+  .login-footer {
+    padding-top: 28px;
   }
 }
