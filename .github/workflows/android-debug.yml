@@ -7,6 +7,11 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/android-debug.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/android-debug.yml'
 
 jobs:
   build-apk:
