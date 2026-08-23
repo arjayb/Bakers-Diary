@@ -11,6 +11,7 @@ const conversionRoutes = require('./src/routes/conversionRoutes');
 const groceryRoutes = require('./src/routes/groceryRoutes');
 const mediaRoutes = require('./src/routes/mediaRoutes');
 const settingsRoutes = require('./src/routes/settingsRoutes');
+const exportRoutes = require('./src/routes/exportRoutes');
 const { errorHandler, notFound } = require('./src/middleware/errorHandler');
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/conversions', conversionRoutes);
 app.use('/api/groceries', groceryRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/export', exportRoutes);
 
 if (process.env.NODE_ENV === 'production') {
   const frontendDist = path.join(__dirname, '../frontend/dist');
