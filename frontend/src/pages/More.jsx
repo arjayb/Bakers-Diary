@@ -7,6 +7,40 @@ import * as api from '../api/client';
 export default function More() {
   const { theme, setTheme } = useTheme();
   const { signOut } = useAuth();
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
+
+  async function exportOfflineData() {
+    setExporting(true);
+    setExportError('');
+    try {
+      const token = localStorage.getItem('bd_token');
+      if (!token) throw new Error('Please log in again before exporting.');
+      const base = (import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api')).replace(/\/$/, '');
+      const response = await fetch(`${base}/export/offline`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) {
+        let message = `Export failed (${response.status})`;
+        try { const body = await response.json(); if (body?.message) message = body.message; } catch {}
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      const disposition = response.headers.get('content-disposition') || '';
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const filename = match?.[1] || `bakers-diary-offline-export-${new Date().toISOString().slice(0, 10)}.json`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="page-content">
@@ -33,6 +67,15 @@ export default function More() {
         </div>
       </section>
 
+      <section style={{ marginBottom: 'var(--space-5)' }}>
+        <h2>Offline APK Migration</h2>
+        <div className="card">
+          <p className="muted" style={{ marginTop: 0 }}>Download a read-only snapshot of your current recipes, bake history, groceries, settings, and media references for the offline Android edition.</p>
+          <button className="btn btn-gold btn-block" type="button" disabled={exporting} onClick={exportOfflineData}>{exporting ? 'Preparing export…' : 'Export for Offline APK'}</button>
+          {exportError && <div className="alert alert-error" style={{ marginTop: 'var(--space-3)' }}>{exportError}</div>}
+        </div>
+      </section>
+
       <section>
         <h2>Preferences</h2>
         <DedicationToggle />
@@ -43,9 +86,6 @@ export default function More() {
   );
 }
 
-// Local, self-contained hook + component — kept in this file rather than a
-// shared one since it's a single-use toggle tied to this page (§33: avoid
-// over-abstracting a one-off into a shared module).
 function useEnabledDedication() {
   const [enabled, setEnabledState] = useState(true);
   useEffect(() => {
