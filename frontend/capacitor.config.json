@@ -1,0 +1,9 @@
+{
+  "appId": "com.bakersdiary.app",
+  "appName": "Baker's Diary",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false
+  }
+}

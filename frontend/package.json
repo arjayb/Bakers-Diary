@@ -1,19 +1,26 @@
 {
   "name": "bakers-diary-frontend",
-  "version": "0.1.0",
+  "version": "0.2.0-offline-v2",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "android:add": "cap add android",
+    "android:sync": "npm run build && cap sync android",
+    "android:open": "cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "pako": "^2.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
     "@vitejs/plugin-react": "^4.3.1",
     "vite": "^5.4.8"
   }
