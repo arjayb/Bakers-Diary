@@ -106,8 +106,7 @@ cd backend && npm start        # runs server.js directly
 
 ## Testing instructions
 
-There is no automated test suite in v0.1 — see `PROVE.md` for the manual
-verification procedure ADAM should run against a real environment.
+There is no automated test suite in v0.1. See `PROVE.md` for the manual verification procedure to run against a controlled environment.
 
 ## Nutrition provider setup
 
@@ -135,6 +134,15 @@ holding the API secret.
   actually deployed.
 - `JWT_SECRET` must be a real random value in production, not the
   placeholder.
-- This has **not** been deployed as part of this BUILD pass — see
-  `PROVE.md` and the BUILD handoff for exactly what has and hasn't been
-  executed.
+- This version has **not** been deployed. See `PROVE.md` for the documented verification scope and current limitations.
+
+
+---
+
+## About KELBRIC Technologies
+
+We turn practical ideas and operational needs into focused digital products through rapid prototyping and evidence-based iteration.
+
+**Public product process:** DISCOVER → DESIGN → BUILD → PROVE
+
+© 2026 KELBRIC Technologies.
